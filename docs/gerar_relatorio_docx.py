@@ -230,15 +230,20 @@ def corpo_xml(blocos, midias):
             estilo = ESTILO_TITULO.get(nivel, "Ttulo4")
             partes.append(paragrafo(texto, estilo))
         elif tipo == "paragrafo":
-            partes.append(paragrafo(dado, "Normal"))
+            if re.match(r"^\*Figura", dado.strip()):
+                # legenda de figura: centralizada
+                partes.append(paragrafo(dado, "Normal", '<w:jc w:val="center"/>'))
+            else:
+                partes.append(paragrafo(dado, "Normal", '<w:jc w:val="both"/>'))
         elif tipo == "bullet":
             partes.append(paragrafo(
                 dado, "PargrafodaLista",
-                '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr>'))
+                '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr>'
+                '<w:jc w:val="both"/>'))
         elif tipo == "numerado":
-            partes.append(paragrafo(dado, "PargrafodaLista"))
+            partes.append(paragrafo(dado, "PargrafodaLista", '<w:jc w:val="both"/>'))
         elif tipo == "citacao":
-            partes.append(paragrafo(dado, "CitaoIntensa"))
+            partes.append(paragrafo(dado, "CitaoIntensa", '<w:jc w:val="both"/>'))
         elif tipo == "codigo":
             for linha in dado.splitlines():
                 partes.append(
