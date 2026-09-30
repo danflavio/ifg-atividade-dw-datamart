@@ -1,0 +1,61 @@
+﻿sk_cliente;nome;tipo;recencia_dias;pedidos;valor_total;segmento
+34;Kelly Teixeira;PF;6;63;14024.32;A - alto valor
+41;Thiago Barbosa;PF;40;68;13507.6;A - alto valor
+24;Vanessa Lima;PF;11;59;13373.37;A - alto valor
+49;Supermercado Aurora Ltda;PJ;4;65;13178.55;A - alto valor
+27;Juliana Pacheco;PF;5;66;12644.58;A - alto valor
+29;Fábio Braga;PF;24;54;12578.65;A - alto valor
+51;Mercado Bom Preço Ltda;PJ;8;61;12552.62;A - alto valor
+36;Nelson Gonçalves;PF;2;58;12272.45;A - alto valor
+45;Rafael Vasconcelos;PF;13;58;12227.51;A - alto valor
+32;Patrícia Fonseca;PF;2;55;12157.71;A - alto valor
+20;Camila Pereira;PF;1;60;12144.74;A - alto valor
+47;Lucas Martins;PF;4;65;11808.6;A - alto valor
+31;Helena Queiroz;PF;31;55;11516.36;B - intermediario
+16;Eliane Neves;PF;5;55;11472.58;A - alto valor
+14;Igor Esteves;PF;9;61;11459.17;A - alto valor
+22;Eduardo Cardoso;PF;44;53;11417.31;B - intermediario
+13;Bruno Gomes;PF;0;64;11235.27;A - alto valor
+9;Daniel Oliveira;PF;43;52;11178.1;B - intermediario
+17;Lucas Martins;PF;43;57;11128.12;B - intermediario
+8;Isabela Rocha;PF;75;57;11032.09;B - intermediario
+26;Carla Xavier;PF;3;52;11000.27;A - alto valor
+60;Rotisseria Bella Massa Ltda;PJ;19;62;10952.6;A - alto valor
+19;Olívia Silveira;PF;21;62;10812.38;A - alto valor
+57;Hipermercado Central Ltda;PJ;55;52;10768.45;B - intermediario
+5;Fernanda Moraes;PF;2;60;10620.0;A - alto valor
+50;Padaria Pão Dourado Ltda;PJ;6;55;10615.95;A - alto valor
+53;Empório da Serra Ltda;PJ;1;53;10423.33;C - baixo valor
+48;Gustavo Amorim;PF;17;51;10265.75;C - baixo valor
+37;Wagner Zanetti;PF;12;48;10239.24;C - baixo valor
+52;Restaurante Sabor Caseiro Ltda;PJ;8;68;10206.11;A - alto valor
+42;Gabriela Ribeiro;PF;37;46;10123.64;B - intermediario
+15;Rafael Vasconcelos;PF;10;53;10089.97;C - baixo valor
+39;Daniel Oliveira;PF;15;53;10000.44;C - baixo valor
+1;Helena Queiroz;PF;29;54;9924.36;B - intermediario
+7;Wagner Zanetti;PF;26;53;9820.49;B - intermediario
+55;Distribuidora Vale Verde Ltda;PJ;6;48;9768.27;C - baixo valor
+30;Ana Almeida;PF;10;45;9753.29;C - baixo valor
+46;Eliane Neves;PF;7;53;9714.03;C - baixo valor
+10;Leandro Castro;PF;2;52;9675.8;C - baixo valor
+58;Cafeteria Grão Fino Ltda;PJ;45;50;9652.76;B - intermediario
+33;Diego Dias;PF;3;48;9591.5;C - baixo valor
+43;Bruno Gomes;PF;1;50;9467.59;C - baixo valor
+54;Lanchonete Estrela Ltda;PJ;8;50;9287.53;C - baixo valor
+56;Comercial Três Irmãos Ltda;PJ;5;46;9283.45;C - baixo valor
+59;Casa de Carnes Boi Forte Ltda;PJ;10;51;9029.16;C - baixo valor
+21;Jonas Duarte;PF;2;46;8969.02;C - baixo valor
+11;Thiago Barbosa;PF;63;44;8721.41;B - intermediario
+25;Henrique Ferreira;PF;4;48;8579.61;C - baixo valor
+3;Diego Dias;PF;16;64;8564.9;A - alto valor
+38;Isabela Rocha;PF;4;46;8474.64;C - baixo valor
+28;Simone Nogueira;PF;8;42;8327.77;C - baixo valor
+40;Leandro Castro;PF;25;47;8154.98;C - baixo valor
+2;Patrícia Fonseca;PF;44;46;8036.25;B - intermediario
+18;Gustavo Amorim;PF;2;40;7942.98;C - baixo valor
+23;Mariana Santos;PF;3;45;7856.86;C - baixo valor
+12;Gabriela Ribeiro;PF;8;44;7576.86;C - baixo valor
+35;Fernanda Moraes;PF;26;34;7568.93;C - baixo valor
+44;Igor Esteves;PF;23;38;7149.82;C - baixo valor
+4;Kelly Teixeira;PF;65;44;7138.14;B - intermediario
+6;Nelson Gonçalves;PF;21;42;6779.1;C - baixo valor

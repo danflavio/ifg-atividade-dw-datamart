@@ -1,0 +1,36 @@
+# =====================================================================
+# Ambiente do Data Warehouse — IFG / Tópicos Avançados em IA I
+# Sobe um PostgreSQL 16 local para: staging (fontes) + DW + DataMarts.
+#
+#   Subir:      docker compose up -d
+#   Carga:      docker compose exec -T db sh /etl/00_carga_inicial.sh
+#   Derrubar:   docker compose down          (mantém dados)
+#   Zerar tudo: docker compose down -v       (apaga os dados)
+# =====================================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: dw_atividade_db
+    environment:
+      POSTGRES_DB: dw_atividade
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres       # ambiente local/acadêmico (não usar em produção)
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      # dados persistentes (não vão para o git)
+      - pgdata_dw:/var/lib/postgresql/data
+      # scripts do projeto montados como somente-leitura
+      - ./sql:/sql:ro
+      - ./etl:/etl:ro
+      - ./dados_externos:/dados_externos:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dw_atividade"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  pgdata_dw:

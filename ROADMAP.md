@@ -6,186 +6,138 @@
 | Disciplina | Tópicos Avançados em Inteligência Artificial I |
 | Professor | Sirlon Diniz |
 | Entrega | 30/09/2026 |
-| Início | 28/09/2026 |
-| Prazo restante | ~2 dias |
+| Status | Fases 0 a 6 concluídas · Fase 7 (revisão e entrega) em aberto |
 
-**Fontes:** `sql/northwind.sql` (PostgreSQL) + `sql/SQL criação DB Mercearia.sql` (PostgreSQL)
-**Entregáveis:** DDLs do DW e dos DataMarts + Relatório Técnico do processo
-
----
-
-## 📌 Modelo decidido (v1) — Fato de Vendas
-
-**Grão:** 1 linha por **ITEM de pedido** (atômico)
-
-**Dimensões (conformadas):**
-
-| Dimensão | Origem Mercearia | Origem Northwind |
-|---|---|---|
-| Tempo | `Vendas.DATA_VENDA` / `DATA_FATURAMENTO` | `orders.order_date` |
-| Cliente | `Vendas.ID_PESSOA` → `Pessoas` | `orders.customer_id` |
-| Produto | `Itens_Vendas.ID_PRODUTO` → `Produtos`/`Categorias` | `order_details.product_id` |
-| Localidade | `Pessoas→Enderecos→Logradouros→Bairros→Cidades→Uf` | `orders.ship_city/ship_region` |
-| Vendedor | (não existe na Mercearia) | `orders.employee_id` |
-
-**Medidas:**
-
-| Medida | Tipo | Fórmula |
-|---|---|---|
-| quantidade | aditiva | direta |
-| valor_bruto | derivada | `quantity * unit_price` |
-| desconto | não-aditiva (%) | direta |
-| valor_liquido | derivada | `quantity * unit_price * (1 - discount)` |
-
-**Papel duplo:** `Dim_Tempo` usada 2x (data da venda · data do faturamento).
+**Fontes:** `sql/northwind.sql` (COM dados) + `sql/SQL criação DB Mercearia.sql` (SÓ DDL) + `sql/seed_mercearia.sql` (dados sintéticos declarados)
+**Externos:** IBGE (município/população) e BCB/PTAX (USD→BRL), em `dados_externos/`
+**Entregáveis:** DDLs do DW e dos DataMarts + Relatório Técnico
 
 ---
 
-> ⚠️ **Regra de ouro do prazo:** com 2 dias, o escopo é *definir bem* e *executar o essencial*.
-> Melhor entregar 3 DataMarts sólidos e justificados do que 5 pela metade.
+## 📌 Modelo implementado (v2)
+
+**Grão dos fatos:** item de venda/pedido · item de compra · pedido/entrega
+
+| Fato | Grão | Origem | Medidas |
+|---|---|---|---|
+| `dw.fato_vendas` | item de pedido | Mercearia + Northwind | quantidade, vlr_unitario*, pct_desconto*, vlr_bruto, vlr_desconto, vlr_liquido |
+| `dw.fato_compras` | item de compra | Mercearia | quantidade, vlr_unitario*, vlr_bruto |
+| `dw.fato_entregas` | pedido/entrega | Northwind | vlr_frete, qtd_itens, prazo_dias |
+
+\* não-aditivas (não somar).
+
+**Dimensões:** `dim_tempo` (dia) · `dim_localidade` · `dim_produto` · `dim_cliente` · `dim_vendedor` · `dim_fornecedor` · `dim_transportadora`
+
+**Decisões-chave já registradas:**
+- **Moeda:** tudo em **BRL**; o Northwind (USD) é convertido pela **PTAX de compra do dia**, e `taxa_cambio` + `moeda_origem` ficam gravados na linha do fato (auditabilidade).
+- **Historicidade:** SCD Tipo 2 em `dim_produto` (preço) e `dim_cliente` (faixa de renda), **demonstrada** por `etl/90_teste_scd2.sql`.
+- **Papel duplo:** `dim_tempo` usada 2x (venda/pedido e faturamento/expedição).
+- **Dimensão degenerada:** `num_pedido` / `num_compra`.
+- **Localidade conformada:** granularidade **bairro** no Brasil (enriquecida com código IBGE e população) e **cidade/região** no exterior — o Northwind envia para **21 países**, não apenas EUA.
+- **Dados externos também exigem padronização:** `Brazil` (Northwind) e `Brasil` (Mercearia) viram o mesmo país via `ext.pais_nome`.
 
 ---
 
-## Fase 0 — Ambiente e estrutura (HOJE · ~1h)
+## Fase 0 — Ambiente e estrutura ✅ CONCLUÍDA
 
-- [ ] Confirmar PostgreSQL instalado e acessível (psql / pgAdmin / DBeaver)
-- [ ] Criar banco de **staging (ODS)**: `dw_atividade` (onde Northwind e Mercearia convivem)
-- [ ] Carregar `northwind.sql` — validar contagem de linhas nas tabelas
-- [ ] Carregar `SQL criação DB Mercearia.sql` — validar contagem de linhas
-- [ ] Criar esquemas no mesmo banco: `stg_northwind`, `stg_mercearia`, `dw`, `dm`
-- [ ] Definir ferramenta de modelagem (draw.io / dbdiagram.io) para o relatório
-- [ ] Estrutura de pastas do projeto: `sql/` (já existe) · `docs/` · `modelos/` · `etl/`
+- [x] PostgreSQL 16 via **Docker** (`docker-compose.yml`, container `dw_atividade_db`)
+- [x] Staging = schema **`public`** (Northwind + Mercearia; não há colisão de nomes)
+- [x] Dados externos no schema **`ext`**; DW no schema **`dw`**
+- [x] Carga reprodutível em **1 comando**: `etl/00_carga_inicial.sh`
+- [x] Estrutura: `sql/` · `etl/` · `dados_externos/` · `docs/` (a criar) · `modelos/` (a criar)
 
-**✅ Concluída quando:** os dois bancos carregam sem erro e você consegue fazer `SELECT COUNT(*)` nas tabelas principais.
+**Contagens validadas:** Northwind 830 pedidos/2.155 itens · Mercearia 3.171 vendas/9.496 itens · DW 11.651 linhas de venda.
 
 ---
 
-## Fase 1 — Análise das fontes e pontos de integração (HOJE · ~2–3h) 🔴 *etapa crítica*
+## Fase 1 — Análise das fontes e integração ✅ CONCLUÍDA
 
-- [ ] Inventariar as tabelas das duas fontes
-  - Northwind (14): customers, employees, products, categories, suppliers, shippers, orders, order_details, territories, region, us_states, customer_demographics, customer_customer_demo, employee_territories
-  - Mercearia (14): Pessoas, Profissoes, Uf, Cidades, Bairros, Logradouros, Enderecos, Telefones, Categorias, Produtos, Compras, Itens_compras, Vendas, Itens_Vendas
-- [ ] **Mapear equivalentes entre as fontes** (o coração da integração):
-  - Produto: `northwind.products` ↔ `mercearia.Produtos`
-  - Categoria: `northwind.categories` ↔ `mercearia.Categorias`
-  - Cliente: `northwind.customers` ↔ `mercearia.Pessoas` (TIPO_PESSOA = cliente?)
-  - Fornecedor: `northwind.suppliers` ↔ `mercearia.Pessoas` (fornecedor em Compras?)
-  - Localidade: `northwind.region/territories/us_states` ↔ `mercearia.Uf/Cidades/Bairros` ⚠️ *granularidades e países diferentes — decidir como conciliar*
-- [ ] Definir **chaves de integração** (surrogate keys + tabelas de correspondência/crosswalk)
-- [ ] Definir **Dados Externos** (obrigatório na atividade) — candidatos:
-  - IBGE: códigos de município, população, PIB (enriquece Localidade)
-  - CEP / Correios (padronização de endereço)
-  - Tabela de feriados nacionais (enriquece Tempo)
-  - Câmbio USD→BRL (Northwind é em USD; Mercearia em BRL) — *justificar no relatório*
-- [ ] Definir **granularidade** do DW (menor nível de detalhe que se deseja guardar)
-- [ ] Documentar decisões (vira seção do relatório)
-
-**✅ Concluída quando:** existe uma tabela/matriz "atributo da fonte A → atributo da fonte B → dimensão do DW".
+- [x] Inventário das 14 + 14 tabelas
+- [x] Mapa de equivalências (Produto, Categoria, Cliente, Fornecedor, Localidade)
+- [x] Chaves de integração: surrogate keys + chaves naturais com índice único
+- [x] **Achados que mudaram o desenho:**
+  - a Mercearia é **DDL sem dados** → resolvido com seed sintético declarado;
+  - o Northwind **não é só EUA**: 21 países de destino; `ship_region` chega a 11 caracteres (ex.: `Brandenburg`) → `sigla_uf` foi ampliado para `VARCHAR(30)`;
+  - 507 de 830 pedidos **não têm região** e 21 não têm expedição → nuláveis tratados no ETL;
+  - rótulos de país em idiomas diferentes → tabela de padronização `ext.pais_nome`.
 
 ---
 
-## Fase 2 — Modelagem do DW Organizacional (HOJE/amanhã · ~3h)
+## Fase 2 — Modelagem do DW ✅ CONCLUÍDA
 
-- [ ] Escolher abordagem de modelagem (Kimball estrela + barramento de dimensões conformadas ← recomendado)
-- [ ] Definir o **barramento de dimensões conformadas**:
-  - [ ] Dim_Tempo (granularidade: dia) — *gerar via script*
-  - [ ] Dim_Produto (+ Dim_Categoria)
-  - [ ] Dim_Cliente / Pessoa (⚠️ LGPD — dados sensíveis)
-  - [ ] Dim_Localidade (UF → Cidade → Bairro/Região)
-  - [ ] Dim_Vendedor / Funcionário
-  - [ ] Dim_Fornecedor
-- [ ] Definir **historicidade** (SCD Tipo 2 em pelo menos uma dimensão — ex.: Cliente ou Produto)
-- [ ] Definir fatos do DW: Vendas, Compras (movimentos de negócio)
-- [ ] Desenhar o diagrama do DW (estrela/galáxia) para o relatório
-- [ ] **Escrever a DDL do DW** → `sql/dw_organizacional.sql`
-
-**✅ Concluída quando:** a DDL do DW roda, cria dimensões + fatos e respeita grão, integração e histórico.
+- [x] Kimball (estrela) + barramento de dimensões conformadas
+- [x] DDL: `sql/01_dw_organizacional.sql` (idempotente: `DROP SCHEMA dw CASCADE`)
+- [x] 7 dimensões + 3 fatos + índices + comentários (dicionário de dados)
+- [x] Correções feitas após teste: índices únicos por chave natural, colunas de moeda, flag de ponto facultativo, `fato_entregas` em grão próprio
 
 ---
 
-## Fase 3 — ETL (amanhã · ~3–4h)
+## Fase 3 — Dados externos, Dim_Tempo e ETL ✅ CONCLUÍDA
 
-- [ ] Decidir a estratégia: SQL puro (recomendado pelo prazo) ou ferramenta (Pentaho/Talend/SSIS)
-- [ ] **Extract:** ler de `stg_northwind` e `stg_mercearia`
-- [ ] **Transform:** limpeza, padronização, deduplicação, tratamento de nulos, integração de códigos
-- [ ] **Load:** carga das dimensões primeiro, depois dos fatos (respeitar FKs)
-- [ ] Carregar Dados Externos
-- [ ] Testes de integridade: contagens origem×destino, registros órfãos, valores nulos indevidos
-- [ ] Scripts em `etl/`
-
-**✅ Concluída quando:** as consultas de validação batem entre origem e DW.
+- [x] `dim_tempo`: 11.323 dias (1996-01-01 a 2026-12-31 = **união** dos períodos dos fatos), com 281 feriados legais e 62 pontos facultativos (`sql/02_dim_tempo.sql`)
+- [x] Feriados calculados (Páscoa por Meeus/Jones/Butcher); Carnaval e Corpus Christi como **ponto facultativo** (não são feriados por lei); 20/11 como feriado só a partir de 2024 (Lei 14.759/2023)
+- [x] **Dados externos reais:** `etl/05_extrair_dados_externos.ps1` → 39 municípios (IBGE) + 750 cotações PTAX
+- [x] Câmbio: calendário com *carry forward* (`ext.cotacao_dolar_dia`)
+- [x] ETL em 4 scripts: dimensões · fatos · teste SCD2 · validação
+- [x] Testes: 13 contagens origem×DW iguais · 0 órfãos · 0 erro de identidade contábil · SCD2 com 1 versão vigente por chave
 
 ---
 
-## Fase 4 — DataMarts (>= 3) (amanhã · ~3h)
+## Fase 4 — DataMarts (≥ 3) ✅ CONCLUÍDA
 
-Escolher **3+ assuntos** e, para cada um, documentar: **assunto · fato · dimensões · grão · justificativa de uso**.
+Três assuntos, cada um em **esquema estrela próprio**, carregado a partir do DW:
 
-- [ ] **DM 1 — Vendas** (análise comercial): fato Vendas × Tempo, Produto, Cliente, Localidade, Vendedor
-- [ ] **DM 2 — Compras/Estoque** (suprimentos): fato Compras × Tempo, Produto, Fornecedor
-- [ ] **DM 3 — Logística/Entregas**: fato Entregas × Tempo, Transportadora (shippers), Localidade
-- [ ] *Alternativas:* DM Clientes/CRM (demografia, renda), DM RH (desempenho de funcionários)
-- [ ] Justificar cada DM (para quem serve, que decisão apoia)
-- [ ] **Escrever a DDL de cada DataMart** → `sql/dm_*.sql`
+- [x] **DM 1 — Vendas** (`dm_vendas`): fato no grão de **item**; tempo (papel duplo), produto, cliente, localidade, vendedor — 11.651 linhas
+- [x] **DM 2 — Suprimentos/Compras** (`dm_suprimentos`): grão de **item de compra**; tempo (papel duplo), produto, fornecedor — 302 linhas
+- [x] **DM 3 — Logística/Entregas** (`dm_logistica`): grão de **pedido**; tempo (papel duplo), cliente (minimizado), localidade, transportadora — 830 linhas
+- [x] DDL: `sql/04_datamarts.sql` · ETL: `etl/30_carga_datamarts.sql` · Validação: `etl/40_validacao_datamarts.sql`
+- [x] Justificativa escrita (assunto · fato · dimensões · grão · uso): `docs/datamarts.md`
+- [x] Diagramas (DW galáxia + 3 DataMarts): `docs/diagramas.md`
 
-**✅ Concluída quando:** cada DM tem DDL própria, roda e há justificativa escrita.
-
----
-
-## Fase 5 — Análise de Dados (amanhã/30 · ~2h)
-
-> 💡 **Contexto da disciplina (IA I):** a atividade pede "ferramentas de análise de dados", mas o curso é de IA.
-> Usar Python (pandas + scikit-learn) conectado ao DW tende a valorizar mais o trabalho do que um BI puramente visual —
-> e ainda abre espaço para um modelo simples (ex.: previsão de vendas / clusterização de clientes) como diferencial.
-
-- [ ] Escolher ferramenta (Metabase/Superset/Power BI/Excel/**Python + SQL**)
-- [ ] Conectar a ferramenta ao DW e aos DataMarts
-- [ ] Criar consultas/visualizações que respondam perguntas de negócio (ex.: top produtos, evolução de vendas, sazonalidade)
-- [ ] *(Opcional/diferencial alinhado à IA)*: aplicar técnica de ML (regressão, clusterização) sobre um DataMart
-- [ ] Exportar prints/tabelas para o relatório
-
-**✅ Concluída quando:** há evidência visual (gráfico/tabela) de análise sobre DW/DM.
+**Decisões registradas:**
+- Dimensões **conformadas** com a **mesma chave surrogate** do DW → testes D3 confirmam 0 divergências entre DataMarts.
+- Recorte em **linhas** (só os membros usados pelos fatos) e, na Logística, também em **colunas** (LGPD: sem CPF mascarado, faixa de renda e data de nascimento).
+- **SCD2 preservado** nos DataMarts: entram todas as versões referenciadas pelos fatos.
 
 ---
 
-## Fase 6 — Relatório Técnico (30/09 · ~3h)
+## Fase 5 — Análise de dados ✅ CONCLUÍDA
 
-- [ ] Introdução e objetivo
-- [ ] Descrição das fontes (Northwind e Mercearia)
-- [ ] Arquitetura do DW (diagrama) + decisões de modelagem
-- [ ] Justificativa de granularidade, integração, historicidade e dados externos
-- [ ] Modelagem dos DataMarts (assunto/fato/dimensão/justificativa)
-- [ ] Processo de ETL (etapas, transformações, testes)
-- [ ] Análises realizadas (resultados)
-- [ ] **LGPD:** se aplicado a dados reais/da sua área, descrever mascaramento/anonimização
-- [ ] Conclusão e referências
+- [x] Ferramenta: **Python 3.13** (pandas, matplotlib, scikit-learn, psycopg2) conectando direto no banco
+- [x] Análise aplicada **ao DW e aos DataMarts** (8 gráficos + 11 tabelas)
+- [x] Análises: evolução mensal, top produtos, faturamento por UF, sazonalidade (dia da semana/feriado), transportadoras, margem por produto (cruzamento de DataMarts)
+- [x] Diferencial de IA: **K-Means (RFM)** para segmentação de clientes e **regressão linear** para projeção de vendas
+- [x] Achados com número + limitações declaradas → `docs/analises.md`
 
----
+**Script:** `analise/analise_dw_datamarts.py` · **Saídas:** `analise/figuras/` e `analise/resultados/`
 
-## Fase 7 — Entrega (30/09)
-
-- [ ] Revisar todos os scripts (rodam do zero sem erro?)
-- [ ] Organizar pacote: DDLs (`sql/`) + relatório (`docs/`)
-- [ ] Conferir se atende aos 3 itens da atividade e às OBS.
-- [ ] Entregar **até 30/09/2026**
+**Achados que a análise revelou (viraram correção do modelo):** cidade com/sem acento duplicada e UF `SP` com dois rótulos — nenhum dos dois aparecia nos testes de contagem.
 
 ---
 
-## Distribuição no prazo (2 dias)
+## Fase 6 — Relatório Técnico ✅ CONCLUÍDA (falta exportar)
 
-| Dia | Foco |
-|-----|------|
-| **28/09 (hoje)** | Fases 0 e 1 (ambiente + integração) e começar Fase 2 |
-| **29/09** | Fase 2 (DDL DW), Fase 3 (ETL) e Fase 4 (DataMarts) |
-| **30/09** | Fase 5 (análise), Fase 6 (relatório), Fase 7 (entrega) |
+- [x] **`docs/RELATORIO-TECNICO.md`** — todas as seções do enunciado: objetivo, fontes, arquitetura, granularidade, integração, historicidade, dados externos, dimensão tempo, LGPD, DataMarts, ETL + testes, análise, limitações, conclusão e referências
+- [x] Declaração de integridade sobre os dados sintéticos da Mercearia
+- [x] Tabela de defeitos encontrados e corrigidos durante a execução (evidência de processo)
+- [x] Referências (Kimball, IBGE, BCB/PTAX, LGPD, Lei 14.759/2023)
+- [ ] Exportar para DOCX/PDF e anexar/inserir os gráficos e diagramas
+
+---
+
+## Fase 7 — Entrega ⬜
+
+- [ ] Roteiro de execução do zero (um comando) conferido
+- [ ] DDLs em `sql/` + relatório em `docs/`
+- [ ] Conferir os 3 itens da atividade e as OBS (dados externos, dimensão tempo, granularidade/integração/historicidade, LGPD)
+- [ ] Entregar até **30/09/2026**
 
 ---
 
 ## Decisões que VOCÊ precisa tomar (não pule)
 
-1. **Grão do DW:** qual o menor nível de detalhe? (item de pedido? pedido? dia?)
-   → ✅ **DECIDIDO: uma linha por ITEM DE PEDIDO (atômico)**
-2. **Como conciliar as localidades** (EUA do Northwind × Brasil da Mercearia)? É uma dimensão conformada ou duas?
-3. **Quais dados externos** entram e por quê?
-4. **Onde aplicar SCD Tipo 2?** (ex.: preço do produto muda com o tempo)
-5. **Quais 3 DataMarts** fazem sentido para o negócio?
+1. **Grão do DW** → ✅ decidido: item de pedido (+ pedido para frete)
+2. **Localidade** → ✅ decidido: uma dimensão conformada com profundidade variável (bairro no BR, cidade/região no exterior)
+3. **Dados externos** → ✅ decidido: IBGE + PTAX + feriados
+4. **SCD Tipo 2** → ✅ decidido e demonstrado: preço do produto e faixa de renda
+5. **Quais 3 DataMarts** → ✅ decidido e implementado: Vendas · Suprimentos/Compras · Logística

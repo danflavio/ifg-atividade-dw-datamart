@@ -1,0 +1,8 @@
+﻿objeto;linhas
+dm_logistica.fato_entregas;830
+dm_suprimentos.fato_compras;302
+dm_vendas.fato_vendas;11651
+dw.dim_tempo;11323
+dw.fato_compras;302
+dw.fato_entregas;830
+dw.fato_vendas;11651
