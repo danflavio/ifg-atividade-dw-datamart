@@ -3,6 +3,8 @@
 > Construção de um **Data Warehouse Organizacional** integrando duas bases distintas
 > (**Northwind** e **Mercearia**) e derivação de **DataMarts** para análise de dados.
 
+**Repositório:** https://github.com/danflavio/ifg-atividade-dw-datamart
+
 ![Status](https://img.shields.io/badge/status-Fases%200--3%20concluídas-yellow)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white)

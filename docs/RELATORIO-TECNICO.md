@@ -7,6 +7,7 @@
 | **Professor** | Sirlon Diniz |
 | **Autor** | Daniel Flávio |
 | **Data de entrega** | 30/09/2026 |
+| **Repositório** | https://github.com/danflavio/ifg-atividade-dw-datamart |
 
 ---
 
@@ -282,3 +283,6 @@ IBGE — API de Localidades e Agregados (acesso em 29/09/2026) · BCB — PTAX/O
 | Testes (integridade e historicidade) | `etl/99_validacao.sql`, `etl/40_validacao_datamarts.sql`, `etl/90_teste_scd2.sql` |
 | Análise (script, gráficos e tabelas) | `analise/` |
 | Diagramas do DW e dos DataMarts | `docs/diagramas.md` |
+
+**Repositório completo** (código, ETL, testes e análises):
+https://github.com/danflavio/ifg-atividade-dw-datamart

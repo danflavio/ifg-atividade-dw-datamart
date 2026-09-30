@@ -236,24 +236,29 @@ def corpo_xml(blocos, midias):
             partes.append(paragrafo(texto, estilo))
         elif tipo == "paragrafo":
             if re.match(r"^\*Figura", dado.strip()):
-                # legenda de figura: centralizada
-                partes.append(paragrafo(dado, "Normal", '<w:jc w:val="center"/>'))
+                # legenda de figura: centralizada, com respiro depois
+                partes.append(paragrafo(dado, "Normal",
+                                        '<w:spacing w:after="240"/><w:jc w:val="center"/>'))
             else:
-                partes.append(paragrafo(dado, "Normal", '<w:jc w:val="both"/>'))
+                partes.append(paragrafo(dado, "Normal",
+                                        '<w:spacing w:after="120"/><w:jc w:val="both"/>'))
         elif tipo == "bullet":
             partes.append(paragrafo(
                 dado, "PargrafodaLista",
                 '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr>'
-                '<w:jc w:val="both"/>'))
+                '<w:spacing w:after="80"/><w:jc w:val="both"/>'))
         elif tipo == "numerado":
-            partes.append(paragrafo(dado, "PargrafodaLista", '<w:jc w:val="both"/>'))
+            partes.append(paragrafo(dado, "PargrafodaLista",
+                                    '<w:spacing w:after="80"/><w:jc w:val="both"/>'))
         elif tipo == "citacao":
-            partes.append(paragrafo(dado, "CitaoIntensa", '<w:jc w:val="both"/>'))
+            partes.append(paragrafo(dado, "CitaoIntensa",
+                                    '<w:spacing w:after="120"/><w:jc w:val="both"/>'))
         elif tipo == "codigo":
             for linha in dado.splitlines():
                 partes.append(
                     '<w:p><w:pPr><w:pStyle w:val="Normal"/>'
-                    '<w:shd w:val="clear" w:fill="F2F2F2"/></w:pPr>'
+                    '<w:shd w:val="clear" w:fill="F2F2F2"/>'
+                    '<w:spacing w:after="0"/></w:pPr>'
                     '<w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/>'
                     '<w:sz w:val="16"/><w:szCs w:val="16"/></w:rPr>'
                     '<w:t xml:space="preserve">%s</w:t></w:r></w:p>'
