@@ -14,6 +14,7 @@ Uso:
 
 import os
 import re
+import sys
 import zipfile
 from xml.sax.saxutils import escape
 from PIL import Image
@@ -21,7 +22,11 @@ from PIL import Image
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELO = os.path.join(os.path.expanduser("~"), "Desktop", "modelo_docx_limpo.docx")
 MARKDOWN = os.path.join(RAIZ, "docs", "RELATORIO-TECNICO.md")
-SAIDA = os.path.join(RAIZ, "docs", "RELATORIO-TECNICO.docx")
+# a saida pode ser passada por argumento (util quando o arquivo esta aberto no Word)
+SAIDA = sys.argv[1] if len(sys.argv) > 1 else os.path.join(RAIZ, "docs", "RELATORIO-TECNICO.docx")
+
+# data que aparece no cabecalho do modelo (substitui a do arquivo original)
+DATA_ENTREGA = "30/09/2026"
 
 LARGURA_UTIL_TWIPS = 10546          # A4 (11906) - margens (680 + 680)
 EMU_POR_TWIP = 635
@@ -313,6 +318,14 @@ def main():
             '<Default Extension="jpeg" ContentType="image/jpeg"/>'
             '<Default Extension="png" ContentType="image/png"/>')
     arquivos["[Content_Types].xml"] = tipos.encode("utf-8")
+
+    # atualiza a data do cabecalho do modelo (nao altera o resto do cabecalho)
+    for nome_cabecalho in ("word/header1.xml", "word/header2.xml", "word/header3.xml"):
+        if nome_cabecalho not in arquivos:
+            continue
+        cabecalho_atual = arquivos[nome_cabecalho].decode("utf-8")
+        cabecalho_novo = re.sub(r"\d{2}/\d{2}/\d{4}", DATA_ENTREGA, cabecalho_atual)
+        arquivos[nome_cabecalho] = cabecalho_novo.encode("utf-8")
 
     with zipfile.ZipFile(SAIDA, "w", zipfile.ZIP_DEFLATED) as destino:
         for nome, conteudo in arquivos.items():
