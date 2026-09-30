@@ -1,0 +1,17 @@
+# ============================================================
+# Normalizacao de fim de linha
+# ------------------------------------------------------------
+# Os scripts de shell e os SQL rodam DENTRO do container Linux.
+# Se o Git converter para CRLF no checkout (padrao no Windows),
+# o container quebra com "\r: command not found".
+# Por isso: estes formatos ficam SEMPRE com LF, em qualquer SO.
+# ============================================================
+*.sh  text eol=lf
+*.sql text eol=lf
+
+# Binarios: nunca converter/tocar
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.docx  binary
+*.pdf   binary
