@@ -232,8 +232,16 @@ def corpo_xml(blocos, midias):
     for tipo, dado in blocos:
         if tipo == "titulo":
             nivel, texto = dado
-            estilo = ESTILO_TITULO.get(nivel, "Ttulo4")
-            partes.append(paragrafo(texto, estilo))
+            if nivel == 1:
+                # titulo do trabalho: centralizado, 16 pt, caixa alta
+                partes.append(
+                    '<w:p><w:pPr><w:pStyle w:val="Ttulo"/>'
+                    '<w:spacing w:before="240" w:after="240"/><w:jc w:val="center"/></w:pPr>'
+                    '<w:r><w:rPr><w:caps/><w:sz w:val="32"/><w:szCs w:val="32"/></w:rPr>'
+                    '<w:t xml:space="preserve">%s</w:t></w:r></w:p>' % escape(texto))
+            else:
+                estilo = ESTILO_TITULO.get(nivel, "Ttulo4")
+                partes.append(paragrafo(texto, estilo))
         elif tipo == "paragrafo":
             if re.match(r"^\*Figura", dado.strip()):
                 # legenda de figura: centralizada, com respiro depois
