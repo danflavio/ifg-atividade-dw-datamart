@@ -125,12 +125,19 @@ Três assuntos, cada um em **esquema estrela próprio**, carregado a partir do D
 
 ---
 
-## Fase 7 — Entrega ⬜
+## Fase 7 — Entrega ✅ CONCLUÍDA
 
-- [ ] Roteiro de execução do zero (um comando) conferido
-- [ ] DDLs em `sql/` + relatório em `docs/`
-- [ ] Conferir os 3 itens da atividade e as OBS (dados externos, dimensão tempo, granularidade/integração/historicidade, LGPD)
-- [ ] Entregar até **30/09/2026**
+- [x] Execução do zero conferida: `docker compose down -v` + `up -d` + carga + análise → **números idênticos**
+- [x] **Teste a partir do clone do GitHub** (não da pasta de trabalho): carga e análise replicadas com sucesso → o repositório é autossuficiente
+- [x] `.gitattributes` forçando **LF** em `.sh`/`.sql` e marcando binários → evita quebrar o container quando clonado no Windows
+- [x] DDLs em `sql/` (DW + DataMarts) e relatório em `docs/` (Markdown + **DOCX + PDF**, 17 páginas)
+- [x] Conferência dos 3 itens da atividade e das OBS (dados externos, dimensão tempo, granularidade, integração, historicidade, LGPD)
+- [ ] **Enviar ao professor** até 30/09/2026 (ação humana)
+
+**Pendências humanas (não são código):**
+1. Revisar visualmente o `docs/RELATORIO-TECNICO.pdf` (cabeçalho, figuras, quebras de página).
+2. Ajustar a data do cabeçalho do modelo, se for entregar em 30/09 (hoje está 29/09/2026).
+3. Treino de defesa: usar `docs/guia-de-bolso.md` + simulado oral (ficou para o dia seguinte, com a cabeça descansada).
 
 ---
 
